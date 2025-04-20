@@ -1,6 +1,7 @@
 package com.example.controller;
 
-import java.io.StringWriter;
+import java.io.BufferedReader;
+import java.io.IOException;
 
 import org.json.JSONObject;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,8 +17,21 @@ import com.example.model.MessageRequest;
 import com.example.model.MessageResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 @RestController
 public class IndexController {
+
+    public String getPostBody(HttpServletRequest request) throws IOException {
+        StringBuilder body = new StringBuilder();
+        try (BufferedReader reader = request.getReader()) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                body.append(line);
+            }
+        }
+        return body.toString();
+    }
     
     @GetMapping("/index")
     public String index() {
@@ -41,14 +55,9 @@ public class IndexController {
     }
 
     @PostMapping(value = "/encrypt", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> postMessageEncrypt(@RequestBody MessageRequest request) {
+    public ResponseEntity<String> postMessageEncrypt(@RequestBody String request) {
         try {
-            MessageResponse msg = new MessageResponse(
-                request.getMessage()
-            );
-
-            String msgStr = new ObjectMapper().writeValueAsString(msg);
-            String encryptedContent = Utils.encript(msgStr);
+            String encryptedContent = Utils.encript(request);
             return ResponseEntity.ok(encryptedContent);
         } catch (Exception e) {
             return ResponseEntity.badRequest()
@@ -56,11 +65,11 @@ public class IndexController {
         }
     }
 
-    @PostMapping(value = "/decrypt", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> postMessageDecrypt(@RequestBody String request) {
+    @PostMapping(value = "/decrypt", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> postMessageDecrypt(@RequestBody MessageRequest request) {
         try {
             AESMiddleware aESEncrypter = new AESMiddleware();
-            String msgStr = request.toString();
+            String msgStr = request.getMessage();
 
             String decryptedContent = aESEncrypter.processInput(msgStr, "1", "0", "2");
             String encryptedText = Utils.hexToText(decryptedContent);
