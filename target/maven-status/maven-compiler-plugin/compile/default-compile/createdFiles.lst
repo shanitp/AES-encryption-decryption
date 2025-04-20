@@ -4,7 +4,6 @@ com\example\filter\AESRequestFilter.class
 com\example\model\MessageRequest.class
 com\example\CBC.class
 com\example\Main.class
-com\example\controller\IndexController.class
 com\example\model\MessageResponse.class
 com\example\AES.class
 com\example\filter\ModifiedRequestWrapper.class

@@ -45,12 +45,10 @@ public class AESRequestFilter extends OncePerRequestFilter {
                 ) {
                     System.out.println("Encrypting request body");
                 } else {
+                    String key = request.getHeader("X-encrypt-key");
                     AESMiddleware aESEncrypter = new AESMiddleware();
-                    System.out.println("Decrypting request body");
-                    System.out.println(postBodyRaw);
-                    String decryptedContent = aESEncrypter.processInput(postBodyRaw, "1", "0", "2");
+                    String decryptedContent = aESEncrypter.processInput(postBodyRaw, "1", "0", "2", key);
                     String decryptedText = Utils.hexToText(decryptedContent);
-                    System.out.println(decryptedText);
                     JSONObject jsonObj = new JSONObject(decryptedText);
                     finalPostBody = jsonObj.toString();                
                 }

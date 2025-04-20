@@ -39,14 +39,15 @@ public class IndexController {
     }
 
     @PostMapping(value = "/index", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> postMessage(@RequestBody MessageRequest request) {
+    public ResponseEntity<String> postMessage(@RequestBody MessageRequest request, HttpServletRequest httpRequest) {
         try {
+            String key = httpRequest.getHeader("X-encrypt-key");
             String newMessage = "We received your message: " + request.getMessage();
             MessageResponse msg = new MessageResponse(
                 newMessage
             );
             String msgStr = new ObjectMapper().writeValueAsString(msg);
-            String encryptedContent = Utils.encrypt(msgStr);
+            String encryptedContent = Utils.encrypt(msgStr, key);
             return ResponseEntity.ok(encryptedContent);
         } catch (Exception e) {
             return ResponseEntity.badRequest()
@@ -55,10 +56,12 @@ public class IndexController {
     }
 
     @PostMapping(value = "/encrypt", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> postMessageEncrypt(@RequestBody String request) {
+    public ResponseEntity<String> postMessageEncrypt(@RequestBody String request, HttpServletRequest httpRequest) {
         try {
-            String encryptedContent = Utils.encrypt(request);
-            return ResponseEntity.ok(encryptedContent);
+            String key = httpRequest.getHeader("X-encrypt-key");            
+            String encryptedContent = Utils.encrypt(request, key);
+            return ResponseEntity.ok()
+                .body(encryptedContent);
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                 .body(e.getMessage());
@@ -66,12 +69,13 @@ public class IndexController {
     }
 
     @PostMapping(value = "/decrypt", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> postMessageDecrypt(@RequestBody MessageRequest request) {
+    public ResponseEntity<String> postMessageDecrypt(@RequestBody MessageRequest request, HttpServletRequest httpRequest) {
         try {
             AESMiddleware aESEncrypter = new AESMiddleware();
             String msgStr = request.getMessage();
+            String key = httpRequest.getHeader("X-encrypt-key");
 
-            String decryptedContent = aESEncrypter.processInput(msgStr, "1", "0", "2");
+            String decryptedContent = aESEncrypter.processInput(msgStr, "1", "0", "2", key);
             String encryptedText = Utils.hexToText(decryptedContent);
             JSONObject jsonObj = new JSONObject(encryptedText);
             return ResponseEntity.ok(jsonObj.toString());

@@ -16,16 +16,16 @@ public class AESMiddleware {
     private String inputText, key, initilizationVector;
     private AES aes;
 
-    private static final String CONSTANT_KEY = "00 E4 35 FF 01 35 78 91 AB CD 00 E4 67 F0 12 CF";
+    // private static final String CONSTANT_KEY = "00 E4 35 FF 01 35 78 91 AB CD 00 E4 67 F0 12 CF";
     private static final String CONSTANT_IV = "fe a2 25 a2 20 75 eb 89 2d 0b f3 18 b2 2e 1d ce";
 
-    public String processInput(String content, String operationType, String transmissionSize, String mode) {
+    public String processInput(String content, String operationType, String transmissionSize, String mode, String key) {
         String result = "";
         try {
             this.operation = Integer.parseInt(operationType);
             this.mode = Integer.parseInt(mode);
             this.inputText = this.clean(content);
-            this.key = this.clean(CONSTANT_KEY);
+            this.key = this.clean(key);
             this.initilizationVector = this.clean(CONSTANT_IV);
 
             // Validate operation

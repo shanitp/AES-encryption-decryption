@@ -403,14 +403,15 @@ public class Utils {
     }
 
 
-    public static String encrypt(String text) {
+    public static String encrypt(String text, String key) {
+        if (text == null || key == null) {
+            throw new IllegalArgumentException("Input text and key cannot be null");
+        }
         try {
             AESMiddleware aESEncrypter = new AESMiddleware();
             String msgHex = Utils.textToHex(text);
-            System.out.println("encrypt: " + text);
-
             // Perform AES operation (encryption/decryption)
-            String encryptedContent = aESEncrypter.processInput(msgHex, "0", "0", "2");
+            String encryptedContent = aESEncrypter.processInput(msgHex, "0", "0", "2", key);
             return encryptedContent;
         } catch (Exception e) {
             return "Error: " + e.getMessage();
