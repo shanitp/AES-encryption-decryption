@@ -403,10 +403,11 @@ public class Utils {
     }
 
 
-    public static String encript (String text) {
+    public static String encrypt(String text) {
         try {
             AESMiddleware aESEncrypter = new AESMiddleware();
             String msgHex = Utils.textToHex(text);
+            System.out.println("encrypt: " + text);
 
             // Perform AES operation (encryption/decryption)
             String encryptedContent = aESEncrypter.processInput(msgHex, "0", "0", "2");

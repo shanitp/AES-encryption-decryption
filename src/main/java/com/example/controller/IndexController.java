@@ -46,7 +46,7 @@ public class IndexController {
                 newMessage
             );
             String msgStr = new ObjectMapper().writeValueAsString(msg);
-            String encryptedContent = Utils.encript(msgStr);
+            String encryptedContent = Utils.encrypt(msgStr);
             return ResponseEntity.ok(encryptedContent);
         } catch (Exception e) {
             return ResponseEntity.badRequest()
@@ -57,7 +57,7 @@ public class IndexController {
     @PostMapping(value = "/encrypt", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> postMessageEncrypt(@RequestBody String request) {
         try {
-            String encryptedContent = Utils.encript(request);
+            String encryptedContent = Utils.encrypt(request);
             return ResponseEntity.ok(encryptedContent);
         } catch (Exception e) {
             return ResponseEntity.badRequest()
