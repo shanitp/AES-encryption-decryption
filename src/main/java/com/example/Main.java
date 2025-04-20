@@ -1,4 +1,8 @@
 package com.example;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
 /**
  * Main class which implements the AES algorithm.
  * This class is used to run the AES algorithm
@@ -11,15 +15,9 @@ package com.example;
  * The result is printed to the console.   
  * 
  */
+@SpringBootApplication
 public class Main {
     public static void main(String[] args) {
-        // Check input for file name
-        if (args.length < 1) {
-            System.out.println("Error: No input file provided. Please run again with a input param.");
-        } else {
-            // Call non static interface
-            AESImplementation aesImplementation = new AESImplementation();
-            aesImplementation.run(args);
-        }
+        SpringApplication.run(Main.class, args);
     }
 }

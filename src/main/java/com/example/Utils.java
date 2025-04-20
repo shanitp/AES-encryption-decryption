@@ -1,5 +1,10 @@
 package com.example;
 
+import org.springframework.http.ResponseEntity;
+
+import com.example.model.MessageResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * Utility class containing constants and methods
  * for AES encryption and decryption.
@@ -239,4 +244,175 @@ public class Utils {
             {0x37,0x39,0x2b,0x25,0x0f,0x01,0x13,0x1d,0x47,0x49,0x5b,0x55,0x7f,0x71,0x63,0x6d},
             {0xd7,0xd9,0xcb,0xc5,0xef,0xe1,0xf3,0xfd,0xa7,0xa9,0xbb,0xb5,0x9f,0x91,0x83,0x8d}
     };
+
+    /**
+     * Add PKCS7 padding to ensure the hex string length is a multiple of 32 (16 bytes)
+     * @param hex input hex string
+     * @return padded hex string
+     */
+    public static String padHexString(String hex) {
+        if (hex == null || hex.length() == 0) {
+            throw new IllegalArgumentException("Input hex string cannot be null or empty");
+        }
+        
+        // Remove any whitespace
+        hex = hex.replaceAll("\\s+", "");
+        
+        // Check if the string length is even
+        if (hex.length() % 2 != 0) {
+            hex = "0" + hex; // Add leading zero if odd length
+        }
+        
+        // Calculate required padding
+        int currentLength = hex.length();
+        int paddingBytes = 16 - ((currentLength/2) % 16);
+        int paddingLength = paddingBytes * 2; // Convert bytes to hex chars
+        
+        // Add padding bytes (PKCS7)
+        StringBuilder padded = new StringBuilder(hex);
+        String paddingByte = String.format("%02X", paddingBytes);
+        for (int i = 0; i < paddingLength; i += 2) {
+            padded.append(paddingByte);
+        }
+        
+        return padded.toString();
+    }
+
+    public static String unpadHexString(String hex) {
+        if (hex == null || hex.length() == 0) {
+            throw new IllegalArgumentException("Input hex string cannot be null or empty");
+        }
+        
+        // Remove whitespace
+        hex = hex.replaceAll("\\s+", "");
+        hex = hex.toUpperCase(); // Normalize to upper case for comparison
+        
+        // Check if the string length is valid (multiple of 32 hex chars = 16 bytes)
+        if (hex.length() % 32 != 0) {
+            throw new IllegalArgumentException("Invalid hex string length - must be multiple of 32");
+        }
+        
+        System.out.println("Unpadding hex string: " + hex);
+        
+        // Get the last byte value (last two hex chars)
+        int lastByte;
+        try {
+            String lastByteHex = hex.substring(hex.length()-2);
+            System.out.println("Last byte hex: " + lastByteHex);
+            lastByte = Integer.parseInt(lastByteHex, 16);
+            System.out.println("Last byte value: " + lastByte);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid padding format: " + e.getMessage());
+        }
+        
+        // Validate padding value
+        if (lastByte == 0 || lastByte > 16) {
+            throw new IllegalArgumentException("Invalid padding value: " + lastByte);
+        }
+        
+        // Calculate the start of padding
+        int paddingLength = lastByte * 2; // Convert bytes to hex chars
+        int startPadIndex = hex.length() - paddingLength;
+        if (startPadIndex < 0) {
+            throw new IllegalArgumentException("Invalid padding length: " + paddingLength);
+        }
+        
+        // Verify all padding bytes are correct
+        String expectedPadding = String.format("%02X", lastByte).repeat(lastByte);
+        String actualPadding = hex.substring(startPadIndex);
+        System.out.println("Expected padding: " + expectedPadding);
+        System.out.println("Actual padding: " + actualPadding);
+        
+        if (!expectedPadding.equals(actualPadding)) {
+            throw new IllegalArgumentException("Invalid padding bytes - expected: " + expectedPadding + ", got: " + actualPadding);
+        }
+        
+        // Remove padding
+        return hex.substring(0, startPadIndex);
+    }
+
+    public static String stringToHex(String str) {
+        if (str == null) {
+            return "";
+        }
+        StringBuilder hex = new StringBuilder();
+        // Convert each character to hex
+        for (char ch : str.toCharArray()) {
+            hex.append(String.format("%02X", (int) ch));
+        }
+        return hex.toString();
+    }
+
+    /**
+     * Converts text string to its hexadecimal representation.
+     * Each character in the input string is converted to its two-digit hexadecimal value.
+     * The output is padded to ensure it's a multiple of 32 hex characters (16 bytes) using PKCS7 padding.
+     * 
+     * @param text The input text string to convert
+     * @return A string containing the padded hexadecimal representation of the input text
+     * @throws IllegalArgumentException if the input text is null
+     * 
+     * Example:
+     * textToHex("Hello") returns a 32-character hex string with padding
+     */
+    public static String textToHex(String text) {
+        if (text == null) {
+            throw new IllegalArgumentException("Input text cannot be null");
+        }
+
+        StringBuilder hex = new StringBuilder();
+        for (char ch : text.toCharArray()) {
+            hex.append(String.format("%02X", (int) ch));
+        }
+        return padHexString(hex.toString());
+    }
+
+    public static String hexToText(String hex) {
+        StringBuilder sb = new StringBuilder();
+        try {
+            for (int i = 0; i < hex.length(); i += 2) {
+                String str = hex.substring(i, i + 2);
+                sb.append((char)Integer.parseInt(str, 16));
+            }
+            return sb.toString();
+        } catch (NumberFormatException | StringIndexOutOfBoundsException e) {
+            throw new IllegalArgumentException("Invalid hex string: " + e.getMessage());
+        }
+    }
+
+    public static byte[] hexToBytes(String hex) {
+        int len = hex.length();
+        byte[] bytes = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            bytes[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4)
+                    + Character.digit(hex.charAt(i + 1), 16));
+        }
+        return bytes;
+    }
+
+    public static String bytesToHex(byte[] bytes) {
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : bytes) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) {
+                hexString.append('0');
+            }
+            hexString.append(hex);
+        }
+        return hexString.toString().toUpperCase();
+    }
+
+
+    public static String encript (String text) {
+        try {
+            AESMiddleware aESEncrypter = new AESMiddleware();
+            String msgHex = Utils.textToHex(text);
+
+            // Perform AES operation (encryption/decryption)
+            String encryptedContent = aESEncrypter.processInput(msgHex, "0", "0", "2");
+            return encryptedContent;
+        } catch (Exception e) {
+            return "Error: " + e.getMessage();
+        }
+    }
 }
